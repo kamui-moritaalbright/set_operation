@@ -17,6 +17,8 @@ def lowercase(string, n, func): #func is going to be passed as a lambda function
 
 def binarysearch(array, value, start, end, equals,lessthan): #binary search function
     #this returns the index if the value is found and returns a -1 if not
+    if(start > end):
+      return -1
     if start <= end:
         midpointIndex = (start + end) // 2
         midpointValue = array[midpointIndex]
@@ -26,8 +28,6 @@ def binarysearch(array, value, start, end, equals,lessthan): #binary search func
             return binarysearch(array, value, midpointIndex + 1, end,lambda x,y:x==y,lambda x,y:x<y)
         else:
             return binarysearch(array, value, start, midpointIndex - 1,lambda x,y:x==y,lambda x,y:x<y)
-    else:
-        return -1
 
 def length(list): #length function that returns length of array
     return length2(list, 0)
@@ -76,20 +76,10 @@ def union (array1,array2): #this is the union function and it works
 
 def intersection (array1,array2):
     def inter(array1,array2,result=[],index=0):
-        if length(array1)<length(array2):
-            boundaryIndex=length(array1)-1
-            nonboundaryArray=array2;
-        else:
-            boundaryIndex = length(array2) - 1
-            nonboundaryArray=array1
-        if index==length(nonboundaryArray):
-            return result
-        if boundaryIndex==length(array2) - 1:
-            if binarysearch(array2,array1[index],0,length(array2)-1,lambda x,y:x==y,lambda x,y:x<y)!=-1 and binarysearch(result,array1[index],0,length(result)-1,lambda x,y:x==y,lambda x,y:x<y)==-1:
-                result.append(array1[index])
-        else:
-            if binarysearch(array1,array2[index],0,length(array1)-1,lambda x,y:x==y,lambda x,y:x<y)!=-1 and binarysearch(result,array2[index],0,length(result)-1,lambda x,y:x==y,lambda x,y:x<y)==-1:
-                result.append(array2[index])
+        if index == length(array1):
+          return result
+        if binarysearch(array2,array1[index],0,length(array2)-1,lambda x,y:x==y,lambda x,y:x<y)!=-1 :
+          result.append(array1[index])
         return inter(array1,array2,result,index+1)
     array1 = process_content(array1)
     array2 = process_content(array2)
@@ -97,7 +87,15 @@ def intersection (array1,array2):
     array2 = merge_sort(array2)
     lowerCaseArray(array1, 0)
     lowerCaseArray(array2, 0)
-    combined_array= inter(array1,array2)
+    array1 = clearDuplicates(array1)
+    array2 = clearDuplicates(array2)
+    if length(array1)<length(array2):
+            large_arr = array2
+            little_arr = array1
+    else:
+            large_arr = array1
+            little_arr = array2
+    combined_array= inter(large_arr,little_arr)
     combined_array=clearDuplicates(combined_array)
     combined_array=merge_sort(combined_array)
     return combined_array
@@ -115,8 +113,6 @@ def difference (arr1, arr2):
     arr2 = lowerCaseArray(arr2,0)
     arr1 = merge_sort(arr1)
     arr2 = merge_sort(arr2)
-    arr1 = clearDuplicates(arr1)
-    arr2 = clearDuplicates(arr2)
     lowerCaseArray(arr1,0)
     lowerCaseArray(arr2,0)
     combined_arr = diff(arr1, arr2)
@@ -194,40 +190,18 @@ def merge_sort(arr):
     left_half = merge_sort(arr[:mid])
     right_half = merge_sort(arr[mid:])
 
-    return merge(left_half, right_half, 0, 0)
+    return merge(left_half, right_half)
 
-def merge(left, right, left_index, right_index):
-    result = []
+def merge(left, right):
+    if not left:  # If left is empty
+        return right
+    if not right:  # If right is empty
+        return left
 
-    if left_index < length(left) and right_index < length(right):
-        if is_number(left[left_index]) or is_number(right[right_index]):
-            if is_number(left[left_index]) and is_number(right[right_index]):
-                if float(left[left_index]) <= float(right[right_index]):
-                    result.append(left[left_index])
-                    return result + merge(left, right, left_index + 1, right_index)
-                else:
-                    result.append(right[right_index])
-                    return result + merge(left, right, left_index, right_index + 1)
-            elif is_number(left[left_index]):
-                result.append(left[left_index])
-                return result + merge(left, right, left_index + 1, right_index)
-            else:
-                result.append(right[right_index])
-                return result + merge(left, right, left_index, right_index + 1)
-        else:
-            if left[left_index] <= right[right_index]:
-                result.append(left[left_index])
-                return result + merge(left, right, left_index + 1, right_index)
-            else:
-                result.append(right[right_index])
-                return result + merge(left, right, left_index, right_index + 1)
-
-    # If one of the arrays is exhausted, append the remaining elements of the other
-    result.extend(left[left_index:])
-    result.extend(right[right_index:])
-
-    return result
-
+    if left[0] <= right[0]:
+        return [left[0]] + merge(left[1:], right)
+    else:
+        return [right[0]] + merge(left, right[1:])
 def is_number(s):
     try:
         float(s)
@@ -250,9 +224,11 @@ def main():
         result = union(set1_content, set2_content)
     elif operation == 'intersection':
         result = intersection(set1_content, set2_content)
+        if(result==[]):
+            result = 'empty set'
     else:
         print("Invalid operation. Supported operations are: difference, union, intersection")
-    with open("result.txt", 'w') as result_file:
+    with open("result" + set1_filename[set1_filename.find('.')-1] + ".txt", 'w') as result_file:
         result_file.write('\n'.join(result))
 if __name__ == '__main__':
     main()
