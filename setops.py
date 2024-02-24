@@ -1,6 +1,11 @@
+#!/usr/bin/env python3
 #setops
 # Zachary P and Kamui M-A
-#1/22 2:25 last edited
+#1/22 3:14 last edited
+def read_file(filename):
+    with open(filename, 'r') as file:
+        content = file.read()
+    return content
 
 def lowercase(string, n, func): #func is going to be passed as a lambda function lamba x: chr(ord(x)+32))
     if n > 0:
@@ -10,19 +15,19 @@ def lowercase(string, n, func): #func is going to be passed as a lambda function
         return lowercase(string, n-1, func)
     return string
 
-def binarysearch(array, value, start, end): #binary search function
+def binarysearch(array, value, start, end, equals,lessthan): #binary search function
     #this returns the index if the value is found and returns a -1 if not
+    if(start > end):
+      return -1
     if start <= end:
         midpointIndex = (start + end) // 2
         midpointValue = array[midpointIndex]
-        if midpointValue == value:
+        if equals(midpointValue,value):
             return midpointIndex + 1
-        elif midpointValue < value:
-            return binarysearch(array, value, midpointIndex + 1, end)
+        elif lessthan(midpointValue,value):
+            return binarysearch(array, value, midpointIndex + 1, end,lambda x,y:x==y,lambda x,y:x<y)
         else:
-            return binarysearch(array, value, start, midpointIndex - 1)
-    else:
-        return -1
+            return binarysearch(array, value, start, midpointIndex - 1,lambda x,y:x==y,lambda x,y:x<y)
 
 def length(list): #length function that returns length of array
     return length2(list, 0)
@@ -53,41 +58,68 @@ def clearDuplicates(array, index=0,result=None): #clears duplicates from an arra
         result = []
     if index==length(array):
         return result
-    if binarysearch((result),array[index],0,length(result)-1)==-1:
+    if binarysearch((result),array[index],0,length(result)-1,lambda x,y:x==y,lambda x,y:x<y)==-1:
         result.append(array[index])
     return clearDuplicates(array,index+1,result)
 
 def union (array1,array2): #this is the union function and it works
-    # right now it only works on completely sorted arrays, if not
-    #sorted it will not work
-    #a mergesort needs to be added at the end of this because it prints
-    #backwards (aka numbers then letters)
+    array1 =process_content(array1)
+    array2= process_content(array2)
+    array1= merge_sort(array1)
+    array2= merge_sort(array2)
     lowerCaseArray(array1,0)
     lowerCaseArray(array2,0)
     combined_array=array1+array2;
     combined_array=clearDuplicates(combined_array)
+    combined_array=merge_sort(combined_array)
     return combined_array
 
-#def intersection (array1,array2):
-    #lowerCaseArray(array1)
-    #lowerCaseArray(array2)
-    #result=[]
-    #def inter (arr1,arr2,index,result):
-        #if length(arr1)>length(arr2):
-            #largerArray = arr1
-        #else:
-            #largerArray = arr2
-        #if index==length(largerArray)-1:
-            #return result
-        #if binarysearch(arr2,arr1[index],0,length(arr2)-1)!=-1 and binarysearch(result,arr1[index],0,length(result)-1)==-1:
-            #result.append(arr1[index])
-        #if binarysearch(arr1,arr2[index],0,length(arr2)-1)!=-1and binarysearch(result,arr2[index],0,length(result)-1)==-1:
-            #result.append(arr2[index])
-        #return inter(arr1,arr2,index+1,result)
-    #return result
+def intersection (array1,array2):
+    def inter(array1,array2,result=[],index=0):
+        if index == length(array1):
+          return result
+        if binarysearch(array2,array1[index],0,length(array2)-1,lambda x,y:x==y,lambda x,y:x<y)!=-1 :
+          result.append(array1[index])
+        return inter(array1,array2,result,index+1)
+    array1 = process_content(array1)
+    array2 = process_content(array2)
+    array1 = merge_sort(array1)
+    array2 = merge_sort(array2)
+    lowerCaseArray(array1, 0)
+    lowerCaseArray(array2, 0)
+    array1 = clearDuplicates(array1)
+    array2 = clearDuplicates(array2)
+    if length(array1)<length(array2):
+            large_arr = array2
+            little_arr = array1
+    else:
+            large_arr = array1
+            little_arr = array2
+    combined_array= inter(large_arr,little_arr)
+    combined_array=clearDuplicates(combined_array)
+    combined_array=merge_sort(combined_array)
+    return combined_array
 
+def difference (arr1, arr2):
+    def diff(array1, array2, result=[], index=0):
+        if index == length(array1)-1:
+            return result
+        if binarysearch(array2, array1[index], 0, length(array2) - 1, lambda x, y: x == y,lambda x, y: x < y) == -1 and binarysearch(result, array1[index], 0, length(result) - 1,lambda x, y: x == y, lambda x, y: x < y) == -1:
+                result.append(array1[index])
+        return diff(arr1, arr2, result, index + 1)
+    arr1 = process_content(arr1)
+    arr2 = process_content(arr2)
+    arr1 = lowerCaseArray(arr1,0)
+    arr2 = lowerCaseArray(arr2,0)
+    arr1 = merge_sort(arr1)
+    arr2 = merge_sort(arr2)
+    lowerCaseArray(arr1,0)
+    lowerCaseArray(arr2,0)
+    combined_arr = diff(arr1, arr2)
+    combined_arr = clearDuplicates(combined_arr)
+    combined_arr = merge_sort(combined_arr)
+    return combined_arr
 
-#added
 def isnum_let(ch): #return True if the character is a number/letter
   if (48<=ord(ch)<=57 or 65<=ord(ch)<=90 or 97<=ord(ch)<=122):
     return True
@@ -149,6 +181,7 @@ def process_content(content, index=0, current_string='', cu_isnum = False, cu_fr
 
   return process_content(content, index + 1, current_string, cu_isnum, cu_fraction, result)
 
+
 def merge_sort(arr):
     if len(arr) <= 1:
         return arr
@@ -160,38 +193,15 @@ def merge_sort(arr):
     return merge(left_half, right_half)
 
 def merge(left, right):
-    result = []
-    left_index, right_index = 0, 0
+    if not left:  # If left is empty
+        return right
+    if not right:  # If right is empty
+        return left
 
-    while left_index < len(left) and right_index < len(right):
-        if is_number(left[left_index]) or is_number(right[right_index]):
-            if is_number(left[left_index]) and is_number(right[right_index]):
-                if float(left[left_index]) <= float(right[right_index]):
-                    result.append(left[left_index])
-                    left_index += 1
-                else:
-                    result.append(right[right_index])
-                    right_index += 1
-            elif is_number(left[left_index]):
-                result.append(left[left_index])
-                left_index += 1
-            else:
-                result.append(right[right_index])
-                right_index += 1
-        else:
-            if left[left_index].lower() <= right[right_index].lower():
-                result.append(left[left_index])
-                left_index += 1
-            else:
-                result.append(right[right_index])
-                right_index += 1
-
-    # Append any remaining elements
-    result.extend(left[left_index:])
-    result.extend(right[right_index:])
-
-    return result
-
+    if left[0] <= right[0]:
+        return [left[0]] + merge(left[1:], right)
+    else:
+        return [right[0]] + merge(left, right[1:])
 def is_number(s):
     try:
         float(s)
@@ -201,15 +211,24 @@ def is_number(s):
 
 
 def main():
-    #array = ["1","1","2","3","4","4","5","6","6","6","7","7","7","7","8","9"]
-    #array2 = ["9","Cat","Dog","Fox","seagull","turtle","zebra"]
-    input1 = "cold, 12.34 blue 5678 tree. 91011 rock 12.13 star, 91011 moon. 91.011"
-    input2 = "tree, 12.34 Blue. 5678 hot. 91011 rock 12.13 star 91011 Moon. 91.012"
-    array1 = process_content(input1)
-    array2 = process_content(input2)
-    sorted_arr1 = merge_sort(array1)
-    sorted_arr2 = merge_sort(array2)
-    print(merge_sort(union(sorted_arr1,sorted_arr2)))
-    #print(intersection(array,array2))
+    import sys
+    args = sys.argv[1].split(';')
+    set1_filename = args[0].split('=')[1]
+    set2_filename = args[1].split('=')[1]
+    operation = args[2].split('=')[1]
+    set1_content = read_file(set1_filename)
+    set2_content = read_file(set2_filename)
+    if operation == 'difference':
+        result = difference(set1_content, set2_content)
+    elif operation == 'union':
+        result = union(set1_content, set2_content)
+    elif operation == 'intersection':
+        result = intersection(set1_content, set2_content)
+        if(result==[]):
+            result = 'empty set'
+    else:
+        print("Invalid operation. Supported operations are: difference, union, intersection")
+    with open("result" + set1_filename[set1_filename.find('.')-1] + ".txt", 'w') as result_file:
+        result_file.write('\n'.join(result))
 if __name__ == '__main__':
     main()
